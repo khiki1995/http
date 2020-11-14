@@ -149,7 +149,7 @@ func UploadImage(writer http.ResponseWriter, request *http.Request, fileName str
 		fileName = "1"
 	}
 	fileName = fileName + filepath.Ext(handler.Filename)
-	absPath, err := filepath.Abs("web/banners/"+fileName)
+	absPath, err := filepath.Abs("web/banners/" + fileName)
 	if err != nil {
 		log.Print(err)
 		return "", err
