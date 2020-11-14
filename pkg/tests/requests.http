@@ -1,0 +1,11 @@
+### get banner
+GET http://localhost:9999/banners.getById?id=2
+
+### remove banner
+GET http://localhost:9999/banners.removeById?id=1
+
+### get all banners
+GET http://localhost:9999/banners.getAll
+
+### save banner
+GET http://localhost:9999/banners.save?id=0&title="Тест"&content="test content"&button="button"&link="Link"
