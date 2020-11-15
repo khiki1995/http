@@ -1,9 +1,6 @@
 package app
 
 import (
-	"io"
-	"os"
-	"path/filepath"
 	"encoding/json"
 	"strconv"
 	"log"
@@ -63,20 +60,15 @@ func (s *Server) handleSaveBanner(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
-	fileName, err := UploadImage(writer, request, idParam)
-	if err != nil {
-		log.Print(err)
-		return
-	}
 	var banner = &banners.Banner{
 		ID: 		 id,
 		Title: 	  	 request.PostFormValue("title"),
 		Content: 	 request.PostFormValue("content"),
 		Button:		 request.PostFormValue("button"),
 		Link:		 request.PostFormValue("link"),
-		Image:		 fileName,
+		Image:		 "",
 	}
-	item, err := s.bannersSvc.Save(request.Context(),banner)
+	item, err := s.bannersSvc.Save(request, banner)
 	if err != nil {
 		log.Print(err)
 		http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -133,37 +125,4 @@ func (s *Server) handleRemoveByID(writer http.ResponseWriter, request *http.Requ
 	if err != nil {
 		log.Print(err)
 	}
-}
-func UploadImage(writer http.ResponseWriter, request *http.Request, fileName string) (string, error) {
-	if err := request.ParseMultipartForm(10 * 1024 * 1024); err != nil {
-		log.Print(err)
-		return "", err
-	}
-	file, handler, err := request.FormFile("image")
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	defer file.Close()
-	if fileName == "0" {
-		fileName = "1"
-	}
-	fileName = fileName + filepath.Ext(handler.Filename)
-	absPath, err := filepath.Abs("web/banners/" + fileName)
-	if err != nil {
-		log.Print(err)
-		return "", err
-	}
-	dst, err := os.Create(absPath)
-	defer dst.Close()
-	if err != nil {
-		http.Error(writer, err.Error(),http.StatusInternalServerError)
-		return "", err
-	}
-
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return "", err
-	}
-	return fileName, nil
 }
