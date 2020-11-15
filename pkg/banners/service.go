@@ -54,10 +54,10 @@ func (s *Service) Save(request *http.Request, item *Banner) (*Banner, error) {
 	for i, banner := range s.items {
 		if  banner.ID == item.ID {
 			fileName, err := UploadImage(request, item.ID)
-			if err != nil {
-				return nil, err
-			}
 			item.Image = fileName
+			if err != nil {
+				item.Image = s.items[i].Image
+			}
 			s.items[i] = item
 			return item, nil
 		}
