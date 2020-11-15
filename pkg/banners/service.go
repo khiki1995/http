@@ -1,12 +1,14 @@
 package banners
 
 import (
+	"strconv"
+	"os"
+	"net/http"
 	"errors"
 	"context"
 	"sync"
-	// "path/filepath"
-	// "io"
-	// "log"
+	"path/filepath"
+	 "io"
 )
 
 type Service struct {
@@ -35,17 +37,27 @@ func (s *Service) All(ctx context.Context) ([]*Banner, error) {
 	return s.items, nil
 }
 
-func (s *Service) Save(ctx context.Context, item *Banner) (*Banner, error) {
+func (s *Service) Save(request *http.Request, item *Banner) (*Banner, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if item.ID == 0 {
 		BannerID += 1
+		fileName, err := UploadImage(request, BannerID)
+		if err != nil {
+			return nil, err
+		}
 		item.ID = BannerID
+		item.Image = fileName
 		s.items = append(s.items, item)
 		return item, nil
 	}
 	for i, banner := range s.items {
 		if  banner.ID == item.ID {
+			fileName, err := UploadImage(request, item.ID)
+			if err != nil {
+				return nil, err
+			}
+			item.Image = fileName
 			s.items[i] = item
 			return item, nil
 		}
@@ -74,4 +86,29 @@ func (s *Service) ByID(ctx context.Context, id int64) (*Banner, error) {
 		}
 	}
 	return nil, errors.New("item not found")
+}
+
+func UploadImage(request *http.Request, bannerID int64) (string, error) {
+	if err := request.ParseMultipartForm(10 * 1024 * 1024); err != nil {
+		return "", err
+	}
+	file, handler, err := request.FormFile("image")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	fileName := strconv.FormatInt(bannerID,10) + filepath.Ext(handler.Filename)
+	absPath, err := filepath.Abs("../web/banners/" + fileName)
+	if err != nil {
+		return "", err
+	}
+	dst, err := os.Create(absPath)
+	defer dst.Close()
+	if err != nil {
+		return "", err
+	}
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", err
+	}
+	return fileName, nil
 }
