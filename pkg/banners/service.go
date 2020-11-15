@@ -98,7 +98,7 @@ func UploadImage(request *http.Request, bannerID int64) (string, error) {
 	}
 	defer file.Close()
 	fileName := strconv.FormatInt(bannerID,10) + filepath.Ext(handler.Filename)
-	absPath, err := filepath.Abs("../web/banners/" + fileName)
+	absPath, err := filepath.Abs("web/banners/" + fileName)
 	if err != nil {
 		return "", err
 	}
